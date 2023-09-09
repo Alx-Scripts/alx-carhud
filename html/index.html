@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alx CarHud</title>
+  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="main.js"></script>
+</head>
+
+<body>
+  <div class="velocimetro">
+    <span id="km">200</span>
+    <span id="texto">km/h</span>
+    <div class="indicadores">
+    <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22 15c0 2.6-1.2 4.9-3.1 6.3l-.5-.5l-2.1-2.1l1.4-1.4l1.2 1.2c.5-.7.9-1.6 1-2.5H18v-2h1.9c-.2-.9-.5-1.7-1-2.5l-1.2 1.2l-1.4-1.4l1.2-1.2c-.7-.5-1.6-.9-2.5-1V11h-2V9.1c-.9.2-1.7.5-2.5 1l3 3c.2 0 .3-.1.5-.1a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-.2 0-.3.1-.5l-3-3c-.5.7-.9 1.6-1 2.5H10v2H8.1c.2.9.5 1.7 1 2.5l1.2-1.2l1.4 1.4l-2.6 2.6C7.2 19.9 6 17.6 6 15a8 8 0 0 1 8-8a8 8 0 0 1 8 8M6.7 5.3L3.4 2L2 3.4l3.3 3.3L4 8h4V4L6.7 5.3Z"/></svg><span id="cruise">N/A</span></p>
+    <p><span id="gear">N</span></p>
+    <p><img id="imagen" src="/image/seatbelt.png" alt=""></p>
+    <p id="lights"><i class="fa fa-lightbulb"></i></p>
+    <p id="fuel">100</p>
+    <span id="cuenta_kilometros"></span>
+    </div>
+    <div class="circle"></div>
+  </div>
+
+  <script>
+    var velocimetro = document.querySelector('.velocimetro');
+    var numDots = 100;
+    var angleStep = 360 / numDots;
+    var dots = [];
+
+    for (var i = 0; i < numDots; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.transform = 'rotate(' + i * angleStep + 'deg) translate(0, -100px)';
+      velocimetro.appendChild(dot);
+      dots.push(dot);
+    }
+
+    function updateActiveDots(numActiveDots) {
+      dots.forEach(function (dot, index) {
+        if (index < numActiveDots) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+
+    function hideVelocimetro() {
+      dots.forEach(function (dot) {
+        dot.classList.remove('active');
+      });
+      velocimetro.style.display = 'none';
+    }
+
+    window.addEventListener('message', function (event) {
+      if (event.data.type === 'rpm') {
+        var rpm = event.data.value;
+        var numActiveDots = Math.round(rpm * numDots);
+        updateActiveDots(numActiveDots);
+      } else if (event.data.type === 'maxSpeed') {
+        var maxSpeed = event.data.value;
+        var maxSpeedElement = document.getElementById('cruise');
+        if (maxSpeed === 0.0) {
+          maxSpeedElement.innerText = 'N/A';
+        } else {
+          maxSpeedElement.innerText = Math.floor(maxSpeed * 3.6); // Convertir a km/h y mostrar como número entero
+        }
+      } else if (event.data.type === 'vehicleGear') {
+        var vehicleGear = event.data.value;
+        var gearElement = document.getElementById('gear');
+        gearElement.innerText = vehicleGear;
+      } else if (event.data.type === 'vehicleStatus') {
+        var isInsideVehicle = event.data.isInsideVehicle;
+        if (isInsideVehicle) {
+          velocimetro.style.display = 'flex';
+        } else {
+          hideVelocimetro();
+        }
+      } else if (event.data.type === 'speed') {
+        var speed = event.data.value * 3.6; // Convertir a km/h
+        var kmElement = document.getElementById('km');
+        kmElement.innerText = Math.floor(speed);
+      } else if (event.data.type === 'statusengine') {
+        var isEngineRunning = event.data.value;
+        if (isEngineRunning) {
+        //  console.log("Motor Encendido")
+        
+        } else {
+         // console.log("Motor Apagado")
+          var numActiveDots = isEngineRunning ? Math.round(numDots * 0.2) : 0;
+          updateActiveDots(numActiveDots);
+        }
+      }
+      else if (event.data.type === 'vehicleSiren') {
+        var sirenas = event.data.value;
+        var circles = document.querySelectorAll('.circle');
+
+        if (sirenas) {
+       //   console.log("Sirenas Encendidas");
+          circles.forEach(function (circle) {
+            circle.style.display = 'block';
+          });
+        } else {
+        //  console.log("Sirenas Apagadas");
+          circles.forEach(function (circle) {
+            circle.style.display = 'none';
+          });
+        }
+      } else if (event.data.type === 'light') {
+        var luces = event.data.value;
+        var lights = document.getElementById('lights');
+
+        if (luces === 'off') {
+       //   console.log("luces apagadas")
+          lights.style.color = 'rgba(119, 119, 119, 0.548)';
+          lights.style.textShadow = 'none';
+        } else if (luces === 'normal') {
+       //   console.log("luces normales")
+          lights.style.color = 'white';
+        } else if (luces === 'high') {
+      //    console.log("luces largas")
+          lights.style.color = 'white';
+          lights.style.textShadow = '0 0 1px #FFF, 0 0 4px #FFF, 0 0 9px #FFF, 0 0 12px #ffffff, 0 0 22px #ffffff, 0 0 32px #ffffff, 0 0 51px #ffffff, 0 0 67px #ffffff';
+        }
+      } else if (event.data.type === 'fuel') {
+        var vehicleFuel = event.data.value;
+        var fuel = document.getElementById('fuel');
+        fuel.innerText = Math.floor(vehicleFuel);
+      } else if (event.data.type === 'seatbelt') {
+        var isSeatbeltOn = event.data.value;
+        var imagenElement = document.getElementById('imagen');
+        var abrochado = new Audio('/sounds/seatbelt-buckle.ogg');
+        var desabrochado = new Audio('/sounds/seatbelt-unbuckle.ogg');
+        if (isSeatbeltOn) {
+            abrochado.play();
+            console.log("Cinturón puesto");
+            imagenElement.src = "/image/seatbelt_active.png";
+        } else {
+            desabrochado.play();
+            console.log("Cinturón no puesto");
+            imagenElement.src = "/image/seatbelt.png";
+        }
+    }
+
+      // console.log("RPM:", numActiveDots)
+    });
+  </script>
+</body>
+
+</html>
