@@ -67,7 +67,7 @@
         if (maxSpeed === 0.0) {
           maxSpeedElement.innerText = 'N/A';
         } else {
-          maxSpeedElement.innerText = Math.floor(maxSpeed * 3.6); // Convertir a km/h y mostrar como número entero
+          maxSpeedElement.innerText = Math.floor(maxSpeed); // Convertir a km/h y mostrar como número entero
         }
       } else if (event.data.type === 'vehicleGear') {
         var vehicleGear = event.data.value;
@@ -81,8 +81,10 @@
           hideVelocimetro();
         }
       } else if (event.data.type === 'speed') {
-        var speed = event.data.value * 3.6; // Convertir a km/h
+        var speed = event.data.value; // Convertir a km/h
         var kmElement = document.getElementById('km');
+        var texto = document.getElementById('texto')
+        texto.innerText = event.data.typekm
         kmElement.innerText = Math.floor(speed);
       } else if (event.data.type === 'statusengine') {
         var isEngineRunning = event.data.value;
@@ -129,7 +131,7 @@
       } else if (event.data.type === 'fuel') {
         var vehicleFuel = event.data.value;
         var fuel = document.getElementById('fuel');
-        fuel.innerText = Math.floor(vehicleFuel);
+        fuel.innerText = Math.floor(vehicleFuel) + " L";
       } else if (event.data.type === 'seatbelt') {
         var isSeatbeltOn = event.data.value;
         var imagenElement = document.getElementById('imagen');
