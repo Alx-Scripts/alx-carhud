@@ -5,6 +5,10 @@ name 'ALX_CarHud'
 description 'ALX CarHud'
 ui_page 'html/index.html'
 
+shared_script {
+    'config.lua'
+}
+
 client_scripts {
     'main.lua'
 } 

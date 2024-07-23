@@ -1,5 +1,4 @@
 local vehiclesCars = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 19, 20}
-
 local cruise = false
 local seatbeltEjectSpeed = 45.0
 local seatbeltEjectAccel = 100.0
@@ -14,10 +13,20 @@ Citizen.CreateThread(function()
         if IsPedInAnyVehicle(player, false) then
             local vehicle = GetVehiclePedIsIn(player, false)
             local vehicleSpeedSource = GetEntitySpeed(vehicle)
-            local vehicleSpeed = vehicleSpeedSource * 3.6 -- Convertir a kilómetros por hora
+            local vehicleSpeed
+            local typekm
+                if Config.TypeKM == "kmh" then
+                    vehicleSpeed = vehicleSpeedSource * 3.6 
+                    typekm = "km/h"
+                elseif Config.TypeKM == "mph" then
+                    vehicleSpeed = vehicleSpeedSource * 2.23694 
+                    typekm = "mph"
+                else
+                    vehicleSpeed = vehicleSpeedSource * 3.6
+                    typekm = "km/h"
+                end
             local vehicleClass = GetVehicleClass(vehicle)
             local rpm = GetVehicleCurrentRpm(vehicle)
-            local speed = GetEntitySpeed(vehicle)
             local isEngineRunning = GetIsVehicleEngineRunning(vehicle)
 
             SendNUIMessage({
@@ -31,7 +40,8 @@ Citizen.CreateThread(function()
             })
             SendNUIMessage({
                 type = "speed",
-                value = speed
+                value = vehicleSpeed,
+                typekm = typekm
             })
             if isEngineRunning then
                 SendNUIMessage({
@@ -69,7 +79,8 @@ Citizen.CreateThread(function()
             end
 
             if IsPedInAnyVehicle(player, false) and isEngineRunning then
-              if IsControlJustReleased(0, 311) and has_value(vehiclesCars, vehicleClass) and vehicleClass ~= 8 then
+                local btnseatbelt = Config.BTNseatbelt
+              if IsControlJustReleased(0, btnseatbelt) and has_value(vehiclesCars, vehicleClass) and vehicleClass ~= 8 then
                   seatbeltIsOn = not seatbeltIsOn
                   SendNUIMessage({
                       type = "seatbelt",
@@ -79,15 +90,31 @@ Citizen.CreateThread(function()
           end
 
             -- crucero
-            if IsControlJustPressed(1, 246) then
+            local btncruise = Config.BTNcruise
+            if IsControlJustPressed(1, btncruise) then
                 if cruise == false then
                     cruise = true
+                    
                     local currentSpeed = GetEntitySpeed(GetVehiclePedIsIn(player, false))
                     SetVehicleMaxSpeed(GetVehiclePedIsIn(player, false), currentSpeed)
-                    SendNUIMessage({
-                        type = "maxSpeed",
-                        value = currentSpeed
-                    })
+                    if Config.TypeKM == "kmh" then
+                        SendNUIMessage({
+                            type = "maxSpeed",
+                            value = currentSpeed * 3.6
+                        })
+                    elseif Config.TypeKM == "mph" then
+
+                        SendNUIMessage({
+                            type = "maxSpeed",
+                            value = currentSpeed * 2.23694 
+                        })
+                    else
+                        SendNUIMessage({
+                            type = "maxSpeed",
+                            value = currentSpeed * 3.6 
+                        })
+                    end
+
                 elseif cruise == true then
                     cruise = false
                     SetVehicleMaxSpeed(GetVehiclePedIsIn(player, false), 0.0)
@@ -120,9 +147,9 @@ Citizen.CreateThread(function()
 
             local vehicleGear = GetVehicleCurrentGear(vehicle)
 
-            if (vehicleSpeed == 0 and vehicleGear == 0) or (vehicleSpeed == 0 and vehicleGear == 1) then
+            if (vehicleSpeedSource == 0 and vehicleGear == 0) or (vehicleSpeedSource == 0 and vehicleGear == 1) then
                 vehicleGear = 'N'
-            elseif vehicleSpeed > 0 and vehicleGear == 0 then
+            elseif vehicleSpeedSource > 0 and vehicleGear == 0 then
                 vehicleGear = 'R'
             end
 
